@@ -8,6 +8,8 @@ from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 import requests
 from datetime import date
+import csv
+from django.http import HttpResponse
 
 from .models import Category, Expense
 from .serializers import CategorySerializer, ExpenseSerializer
@@ -240,3 +242,30 @@ def expense_summary(request):
         "base_currency": base_currency,
         "categories": categories_summary,
     })
+
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+def expense_csv_export(request):
+    """Export all expenses for the logged-in user as a CSV file."""
+    expenses = Expense.objects.filter(user=request.user).order_by("date")
+
+    response = HttpResponse(content_type="text/csv")
+    response["Content-Disposition"] = 'attachment; filename="expenses.csv"'
+
+    writer = csv.writer(response)
+    # Write header row
+    writer.writerow(["ID", "Title", "Amount", "Currency", "Category", "Date", "Notes"])
+
+    # Write expense rows
+    for expense in expenses:
+        writer.writerow([
+            expense.id,
+            expense.title,
+            expense.amount,
+            expense.currency,
+            expense.category.name,
+            expense.date,
+            expense.notes,
+        ])
+
+    return response
