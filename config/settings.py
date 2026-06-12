@@ -11,6 +11,9 @@ SECRET_KEY = os.getenv("SECRET_KEY", "django-insecure-change-me")
 
 DEBUG = os.getenv("DEBUG", "True") == "True"
 
+BASE_CURRENCY = os.getenv("BASE_CURRENCY", "USD")
+EXCHANGE_RATE_API_URL = os.getenv("EXCHANGE_RATE_API_URL", "https://api.exchangerate.host")
+
 ALLOWED_HOSTS = ["*"]
 
 INSTALLED_APPS = [
