@@ -97,7 +97,23 @@ def expense_list(request):
     serializer = ExpenseSerializer(data=request.data)
     serializer.is_valid(raise_exception=True)
     # Assign the logged-in user as the owner
-    serializer.save(user=request.user)
+    expense = serializer.save(user=request.user)
+
+    # Check if this expense pushes the category over its monthly limit
+    category = expense.category
+    if category.monthly_limit is not None:
+        now = date.today()
+        # Calculate month-to-date total for this category
+        month_total = Expense.objects.filter(
+            user=request.user,
+            category=category,
+            date__year=now.year,
+            date__month=now.month,
+        ).aggregate(total=Sum("amount"))["total"] or 0
+
+        if month_total > category.monthly_limit:
+            send_budget_alert(category, float(month_total), float(category.monthly_limit))
+
     return Response(serializer.data, status=status.HTTP_201_CREATED)
 
 
@@ -140,6 +156,25 @@ def get_exchange_rate(from_currency, to_currency):
         pass
     return None, None
 
+def send_budget_alert(category, total_spent, monthly_limit):
+    """Send a budget alert to Discord when a category exceeds its monthly limit."""
+    bot_token = settings.BOT_TOKEN
+    if not bot_token:
+        return
+
+    now = date.today()
+    month_name = now.strftime("%B %Y")
+
+    message = (
+        f" Budget alert: \"{category.name}\" is over its monthly limit.\n"
+        f"Spent {total_spent:.2f} / {monthly_limit:.2f} {settings.BASE_CURRENCY} for {month_name}."
+    )
+
+    try:
+        # Discord webhook — just POST with content field
+        requests.post(bot_token, json={"content": message}, timeout=5)
+    except Exception:
+        pass
 
 @api_view(["GET"])
 @permission_classes([IsAuthenticated])
