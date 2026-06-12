@@ -14,6 +14,9 @@ DEBUG = os.getenv("DEBUG", "True") == "True"
 BASE_CURRENCY = os.getenv("BASE_CURRENCY", "USD")
 EXCHANGE_RATE_API_URL = os.getenv("EXCHANGE_RATE_API_URL", "https://api.exchangerate.host")
 
+BOT_TOKEN = os.getenv("BOT_TOKEN", "")
+BOT_CHAT_ID = os.getenv("BOT_CHAT_ID", "")
+
 ALLOWED_HOSTS = ["*"]
 
 INSTALLED_APPS = [
