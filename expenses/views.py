@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.contrib.auth.models import User
 from django.db.models import Sum
 from rest_framework import status
@@ -5,6 +6,8 @@ from rest_framework.authtoken.models import Token
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
+import requests
+from datetime import date
 
 from .models import Category, Expense
 from .serializers import CategorySerializer, ExpenseSerializer
@@ -121,14 +124,69 @@ def expense_detail(request, pk):
     return Response(status=status.HTTP_204_NO_CONTENT)
 
 
+def get_exchange_rate(from_currency, to_currency):
+    """Fetch exchange rate from open.er-api.com (no API key required)."""
+    if from_currency == to_currency:
+        return 1.0, date.today().isoformat()
+    try:
+        url = f"https://open.er-api.com/v6/latest/{from_currency}"
+        response = requests.get(url, timeout=5)
+        data = response.json()
+        if data.get("result") == "success":
+            rate = data["rates"].get(to_currency)
+            as_of = data.get("time_last_update_utc", date.today().isoformat())[:10]
+            return rate, as_of
+    except Exception:
+        pass
+    return None, None
+
+
 @api_view(["GET"])
 @permission_classes([IsAuthenticated])
 def expense_summary(request):
-    # Only summarize expenses belonging to the logged-in user
-    summary = (
-        Expense.objects.filter(user=request.user)
-        .values("category__name")
-        .annotate(total=Sum("amount"))
-        .order_by("category__name")
-    )
-    return Response(list(summary))
+    base_currency = settings.BASE_CURRENCY
+
+    # Get all expenses for the logged-in user grouped by category
+    expenses = Expense.objects.filter(user=request.user)
+    
+    # Group expenses by category
+    category_expenses = {}
+    for expense in expenses:
+        cat_name = expense.category.name
+        if cat_name not in category_expenses:
+            category_expenses[cat_name] = []
+        category_expenses[cat_name].append(expense)
+
+    categories_summary = []
+    for cat_name, exps in category_expenses.items():
+        total_in_base = 0
+        rate_used = None
+        as_of = None
+
+        for expense in exps:
+            if expense.currency == base_currency:
+                total_in_base += float(expense.amount)
+                rate_used = "1.0"
+                as_of = date.today().isoformat()
+            else:
+                # Fetch exchange rate for this currency
+                rate, rate_date = get_exchange_rate(expense.currency, base_currency)
+                if rate:
+                    total_in_base += float(expense.amount) * rate
+                    rate_used = str(round(rate, 4))
+                    as_of = rate_date
+                else:
+                    # If rate fetch fails, use amount as-is
+                    total_in_base += float(expense.amount)
+
+        categories_summary.append({
+            "category": cat_name,
+            "total": str(round(total_in_base, 2)),
+            "rate": rate_used,
+            "as_of": as_of,
+        })
+
+    return Response({
+        "base_currency": base_currency,
+        "categories": categories_summary,
+    })

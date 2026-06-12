@@ -12,4 +12,5 @@ class CategorySerializer(serializers.ModelSerializer):
 class ExpenseSerializer(serializers.ModelSerializer):
     class Meta:
         model = Expense
-        fields = ["id", "title", "amount", "category", "date", "notes"]
+        # 'category' field was previously misspelled as 'catgory'
+        fields = ["id", "title", "amount", "currency", "category", "date", "notes"]
