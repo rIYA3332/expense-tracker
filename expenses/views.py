@@ -133,7 +133,22 @@ def expense_detail(request, pk):
     if request.method == "PUT":
         serializer = ExpenseSerializer(expense, data=request.data)
         serializer.is_valid(raise_exception=True)
-        serializer.save()
+        updated_expense = serializer.save()
+
+        # Check budget limit on update as well
+        category = updated_expense.category
+        if category.monthly_limit is not None:
+            now = date.today()
+            month_total = Expense.objects.filter(
+                user=request.user,
+                category=category,
+                date__year=now.year,
+                date__month=now.month,
+            ).aggregate(total=Sum("amount"))["total"] or 0
+
+            if month_total > category.monthly_limit:
+                send_budget_alert(category, float(month_total), float(category.monthly_limit))
+
         return Response(serializer.data)
 
     expense.delete()
