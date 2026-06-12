@@ -93,6 +93,21 @@ def expense_list(request):
         if end_date:
             expenses = expenses.filter(date__lte=end_date)
 
+        # Search by title keyword
+        search = request.query_params.get("search")
+        if search:
+            expenses = expenses.filter(title__icontains=search)
+
+        # Filter by category id
+        category_id = request.query_params.get("category")
+        if category_id:
+            expenses = expenses.filter(category__id=category_id)
+
+        # Filter by currency
+        currency = request.query_params.get("currency")
+        if currency:
+            expenses = expenses.filter(currency=currency.upper())
+
         serializer = ExpenseSerializer(expenses, many=True)
         return Response(serializer.data)
 
