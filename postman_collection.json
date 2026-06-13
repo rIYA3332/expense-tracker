@@ -270,32 +270,138 @@
     {
       "name": "Register",
       "request": {
-        "method": "GET",
-        "header": []
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n    \"username\": \"test\",\r\n    \"password\": \"yourpassword\"\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{base_url}}/api/auth/register/",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "api",
+            "auth",
+            "register",
+            ""
+          ]
+        },
+        "description": "Register a new user. Returns an auth token."
       },
       "response": []
     },
     {
       "name": "Login",
       "request": {
-        "method": "GET",
-        "header": []
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n    \"username\": \"testuser\",\r\n    \"password\": \"yourpassword\"\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{base_url}}/api/auth/login/",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "api",
+            "auth",
+            "login",
+            ""
+          ]
+        },
+        "description": "Login with existing credentials. Returns an auth token."
       },
       "response": []
     },
     {
       "name": "Export CSV",
       "request": {
+        "auth": {
+          "type": "apikey",
+          "apikey": [
+            {
+              "key": "value",
+              "value": "{{auth_secret_15ek}}",
+              "type": "string"
+            },
+            {
+              "key": "key",
+              "value": "Authorization",
+              "type": "string"
+            }
+          ]
+        },
         "method": "GET",
-        "header": []
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/api/expenses/export/csv/",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "api",
+            "expenses",
+            "export",
+            "csv",
+            ""
+          ]
+        },
+        "description": "Export all user expenses as a CSV file. Requires Authorization header"
       },
       "response": []
     },
     {
       "name": "Search Expenses",
       "request": {
+        "auth": {
+          "type": "apikey",
+          "apikey": [
+            {
+              "key": "value",
+              "value": "{{auth_secret_0nrf}}",
+              "type": "string"
+            },
+            {
+              "key": "key",
+              "value": "Authorization",
+              "type": "string"
+            }
+          ]
+        },
         "method": "GET",
-        "header": []
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/api/expenses/?search=dinner",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "api",
+            "expenses",
+            ""
+          ],
+          "query": [
+            {
+              "key": "search",
+              "value": "dinner"
+            }
+          ]
+        },
+        "description": "Search expenses by title, category, or currency using ?search=, ?category=, ?currency= query params."
       },
       "response": []
     }
@@ -304,6 +410,14 @@
     {
       "key": "base_url",
       "value": "http://127.0.0.1:8000"
+    },
+    {
+      "key": "auth_secret_0nrf",
+      "secret": true
+    },
+    {
+      "key": "auth_secret_15ek",
+      "secret": true
     }
   ]
 }
