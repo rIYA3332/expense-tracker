@@ -135,7 +135,7 @@ Spent 215.00 / 200.00 USD for June 2026.
 
 **Discord alert screenshot:**
 
-![Discord budget alert](screenshots/discord_alert.png)
+![Discord budget alert](assets/discord_alert.png)
 
 **Assumptions:** BOT_TOKEN in .env is a Discord webhook URL. BASE_CURRENCY is used as the currency label in the alert message.
 
